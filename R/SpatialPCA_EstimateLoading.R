@@ -35,28 +35,58 @@ SpatialPCA_EstimateLoading = function(object, maxiter=300,initial_tau=1,fast=FAL
       object@params$n = dim(object@params$X)[1]
       object@params$p=dim(object@params$X)[2]
 
-  if(is.null(object@covariate)){
-      object@params$H = matrix(1, dim(object@params$X)[1],1)
-      HH_inv=solve(t(object@params$H)%*%object@params$H,tol = 1e-40)
-      HH = object@params$H%*%HH_inv%*%t(object@params$H)
-      object@params$M=diag(object@params$n)-HH
-      # Y=expr
-      object@params$tr_YMY=sum(diag(object@params$expr%*%object@params$M%*%t(object@params$expr)))
-      object@params$YM = object@params$expr%*%object@params$M
-      object@params$q=1
-  }else{
-      object@params$q = dim(object@covariate)[2]+1
-      object@params$H = matrix(0, object@params$n,object@params$q)
-      object@params$H[,1]=1
-      object@params$H[,2:object@params$q] = object@covariate
-      HH_inv=solve(t(object@params$H)%*%object@params$H,tol = 1e-40)
-      HH=object@params$H%*%HH_inv%*%t(object@params$H)
-      object@params$M=diag(object@params$n)-HH
-      #Y=expr
-      object@params$tr_YMY=sum(diag(object@params$expr%*%object@params$M%*%t(object@params$expr)))
-      object@params$YM = object@params$expr%*%object@params$M
+  ######################################################################
+  # For visium HD 
+  ######################################################################
+  expr <- object@params$expr
+  n    <- object@params$n
+
+  if (is.null(object@covariate)) {
+    object@params$q <- 1
+    H <- matrix(1, n, 1)
+    object@params$H <- H
+  } else {
+    object@params$q <- ncol(object@covariate) + 1
+    H = matrix(0, n, object@params$q)
+    H[,1]=1
+    H[,2:object@params$q] = object@covariate
+    object@params$H <- H
   }
 
+  HH_inv <- solve(t(H) %*% H, tol = 1e-40)
+  YH <- expr %*% H
+  B <- YH %*% HH_inv
+  fitted <- B %*% t(H)
+  YM <- expr - fitted
+
+  object@params$YM <- YM
+  object@params$tr_YMY <- sum(YM * YM)
+
+  ######################################################################
+  # Original code 
+  ######################################################################
+  # if(is.null(object@covariate)){
+  #     object@params$H = matrix(1, dim(object@params$X)[1],1)
+  #     HH_inv=solve(t(object@params$H)%*%object@params$H,tol = 1e-40)
+  #     HH = object@params$H%*%HH_inv%*%t(object@params$H)
+  #     object@params$M=diag(object@params$n)-HH
+  #     # Y=expr
+  #     object@params$tr_YMY=sum(diag(object@params$expr%*%object@params$M%*%t(object@params$expr)))
+  #     object@params$YM = object@params$expr%*%object@params$M
+  #     object@params$q=1
+  # }else{
+  #     object@params$q = dim(object@covariate)[2]+1
+  #     object@params$H = matrix(0, object@params$n,object@params$q)
+  #     object@params$H[,1]=1
+  #     object@params$H[,2:object@params$q] = object@covariate
+  #     HH_inv=solve(t(object@params$H)%*%object@params$H,tol = 1e-40)
+  #     HH=object@params$H%*%HH_inv%*%t(object@params$H)
+  #     object@params$M=diag(object@params$n)-HH
+  #     #Y=expr
+  #     object@params$tr_YMY=sum(diag(object@params$expr%*%object@params$M%*%t(object@params$expr)))
+  #     object@params$YM = object@params$expr%*%object@params$M
+  # }
+  ######################################################################
 
   if(fast==FALSE){
       object@fast=fast
@@ -108,7 +138,18 @@ SpatialPCA_EstimateLoading = function(object, maxiter=300,initial_tau=1,fast=FAL
         }
     }
 
+    ######################################################################
+    # For visium HD 
+    ######################################################################
+    object@params$MYt   <- t(object@params$YM)               # n × k
+    object@params$YMMYt <- object@params$YM %*% object@params$MYt  # k × k
 
+    ######################################################################
+    # Original code 
+    ######################################################################
+    # object@params$MYt = object@params$M %*% t(object@params$expr)
+    # object@params$YMMYt = object@params$YM %*% object@params$MYt
+      
     object@params$MYt = object@params$M %*% t(object@params$expr)
     object@params$YMMYt = object@params$YM %*% object@params$MYt
     object@params$YMU = object@params$YM %*% object@params$U
