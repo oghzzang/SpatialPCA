@@ -149,9 +149,6 @@ SpatialPCA_EstimateLoading = function(object, maxiter=300,initial_tau=1,fast=FAL
     ######################################################################
     # object@params$MYt = object@params$M %*% t(object@params$expr)
     # object@params$YMMYt = object@params$YM %*% object@params$MYt
-      
-    object@params$MYt = object@params$M %*% t(object@params$expr)
-    object@params$YMMYt = object@params$YM %*% object@params$MYt
     object@params$YMU = object@params$YM %*% object@params$U
     object@params$Xt = t(object@params$H)
     object@params$XtU = object@params$Xt %*% object@params$U
