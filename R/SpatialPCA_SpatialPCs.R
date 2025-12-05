@@ -65,8 +65,27 @@ if(fast==FALSE){
     WtYMK = WtYM %*% object@kernelmat
     WtYMU = WtYM %*% object@params$U
     Ut=t(object@params$U)
-    UtM = Ut %*% object@params$M
-    UtMK = UtM %*% object@kernelmat
+
+	############################################################
+	# For visium HD
+	############################################################
+	H       = object@params$H       
+	HH_inv  = solve(t(H) %*% H)      
+
+	UtH      = Ut %*% H              # r × q
+	Ut_proj  = UtH %*% HH_inv %*% t(H)   # r × n
+	UtM      = Ut - Ut_proj          # r × n
+	############################################################=
+
+
+	
+	############################################################
+  	# Original code 
+	############################################################=
+	# UtM = Ut %*% object@params$M
+    ############################################################=
+
+	UtMK = UtM %*% object@kernelmat
     UtMU = UtM %*% object@params$U
     middle_inv = solve(1/tau * diag(1/delta) + UtMU, tol = 1e-40)
     
@@ -86,6 +105,7 @@ if(fast==FALSE){
 
     return(object)
 }
+
 
 
 
